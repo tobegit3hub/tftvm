@@ -8,7 +8,6 @@ _tvm_runtime_ops = load_library.load_op_library(
             resource_loader.get_path_to_datafile('tvm_runtime.so'))
 tvm_runtime = _tvm_runtime_ops.tvm_runtime
 
-sess = tf.Session()
-
-t = tvm_runtime(tf.constant([10, 20, 11, -30]))
-print(sess.run(t))
+with tf.Session() as sess:
+  output = tvm_runtime(tf.constant([10, 20, 11, -30]))
+  print(sess.run(output))
