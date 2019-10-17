@@ -9,25 +9,26 @@
 using namespace tensorflow;
 
 class TvmRuntimeOp : public OpKernel {
+
  public:
-  explicit TvmRuntimeOp(OpKernelConstruction* context) : OpKernel(context) {}
-
-  void Compute(OpKernelContext* context) override {
-
-    // Grab the input tensor
-    const Tensor& input_tensor = context->input(0);
-
-    // TODO: Need to specify dtype
-    auto input = input_tensor.flat<int32>();
-
+  explicit TvmRuntimeOp(OpKernelConstruction* context) : OpKernel(context) {
     // TODO: Need to load dynamic library and specify function
     tvm::runtime::Module mod_dylib =
         tvm::runtime::Module::LoadFromFile("lib/test_addone_dll.so");
     LOG(INFO) << "Verify dynamic loading from test_addone_dll.so";
 
     const string fname = "addone";
-    tvm::runtime::PackedFunc f = mod_dylib.GetFunction(fname);
+    //tvm::runtime::PackedFunc f = mod_dylib.GetFunction(fname);
+    f = mod_dylib.GetFunction(fname);
     CHECK(f != nullptr);
+  }
+  
+  void Compute(OpKernelContext* context) override {
+    // Grab the input tensor
+    const Tensor& input_tensor = context->input(0);
+
+    // TODO: Need to specify dtype
+    auto input = input_tensor.flat<int32>();
 
     DLTensor* x;
     DLTensor* y;
@@ -59,6 +60,10 @@ class TvmRuntimeOp : public OpKernel {
     memcpy(output_flat.data(), y->data, input_size*4); 
    
   }
+
+private:
+  tvm::runtime::PackedFunc f;
+
 };
 
 REGISTER_KERNEL_BUILDER(Name("TvmRuntime").Device(DEVICE_CPU), TvmRuntimeOp);
