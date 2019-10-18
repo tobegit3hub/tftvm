@@ -12,19 +12,19 @@ class TvmRuntimeOp : public OpKernel {
 
 private:
   tvm::runtime::PackedFunc tvm_func;
-  string so_path;
+  string lib_path;
   string function_name;
 
  public:
   explicit TvmRuntimeOp(OpKernelConstruction* context) : OpKernel(context) {
 
     // Get attr
-    context->GetAttr("so_path", &so_path);
+    context->GetAttr("lib_path", &lib_path);
     context->GetAttr("function_name", &function_name);
 
     // Load TVM function from dynamic library
-    tvm::runtime::Module mod_dylib = tvm::runtime::Module::LoadFromFile(so_path);
-    LOG(INFO) << "Verify dynamic loading from " << so_path;
+    tvm::runtime::Module mod_dylib = tvm::runtime::Module::LoadFromFile(lib_path);
+    LOG(INFO) << "Verify dynamic loading from " << lib_path;
     tvm_func = mod_dylib.GetFunction(function_name);
     CHECK(tvm_func != nullptr);
   }

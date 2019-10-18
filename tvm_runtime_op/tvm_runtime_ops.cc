@@ -5,7 +5,7 @@
 using namespace tensorflow;
 
 REGISTER_OP("TvmRuntime")
-    .Attr("so_path: string")
+    .Attr("lib_path: string")
     .Attr("function_name: string")
     .Input("tvm_input: float")
     .Output("tvm_output: float");
