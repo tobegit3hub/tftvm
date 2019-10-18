@@ -1,68 +1,49 @@
 # TF-TVM
 
-TensorFlow and TVM integration.
+## Introduction
 
-## TVM Runtime Op
+Integrate TensorFlow custom op with TVM Runtime.
 
-TVM provides the C++ API to deploy TVM op in any devices. We can wrap [tvm_runtime_op](./tvm_runtime_op/) as TensorFlow custom op which can be loaded by TensorFlow Session.
+TVM provides the C++ API to deploy optimized op in any devices. We can wrap TVM Runtime as TensorFlow custom op which can be loaded by TensorFlow graph and session.
 
-Firstly, we can implement the op with TVM stack and export the dynamic library.
+##  Usage
 
-```
-# Define TVM op
-n = tvm.var("n")
-A = tvm.placeholder((n,), name='A', dtype="int32")
-B = tvm.compute(A.shape, lambda *i: A(*i) + 1, name='B')
-s = tvm.create_schedule(B.op)
-
-# Export dynamic library
-fadd_dylib = tvm.build(s, [A, B], "llvm", name="addone")
-dylib_path = os.path.join(base_path, "test_addone_dll.so")
-fadd_dylib.export_library(dylib_path)
-```
-
-Then register new TensorFlow custom op to get tensor data and run with TVM Runtime API.
+1. Implement the TVM op in Python and export the dynamic library.
 
 ```
-// Load TVM op
-tvm::runtime::Module mod_dylib = tvm::runtime::Module::LoadFromFile("lib/test_addone_dll.so");
-const string fname = "addone";
-tvm::runtime::PackedFunc f = mod_dylib.GetFunction(fname);
+cd ./examples/addone/
 
-DLTensor* x;
-DLTensor* y;
-int ndim = 1;
-int dtype_code = kDLInt;
-int dtype_bits = 32;
-int dtype_lanes = 1;
-int device_type = kDLCPU;
-int device_id = 0;
-int64_t shape[1] = {10};
-TVMArrayAlloc(shape, ndim, dtype_code, dtype_bits, dtype_lanes, device_type, device_id, &x);
-TVMArrayAlloc(shape, ndim, dtype_code, dtype_bits, dtype_lanes, device_type, device_id, &y);
-
-// Get data from TensorFlow
-auto input = input_tensor.flat<int32>();
-x->data = const_cast<int32*>(input.data());
-const int input_size = input.size();
-
-// Run TVM op
-f(x, y);
-
-// Output data to TensorFlow
-Tensor* output_tensor = NULL;
-OP_REQUIRES_OK(context, context->allocate_output(0, input_tensor.shape(), &output_tensor));
-auto output_flat = output_tensor->flat<int32>();
-memcpy(output_flat.data(), y->data, input_size*4); 
+./prepare_addone_lib.py
 ```
 
-Finally, we can use the TVM op like normal TensorFlow op and run by TensorFlow Session.
+This will generate the file `tvm_addone_dll.so`.
+
+2. Load TVM op with TensorFlow custom op.
+
+Download the `tvm_runtime_op.so` and `tvm_runtime.py` for your OS. If you want to build from scratch, make sure `tesnorflow` is installed and `TVM_HOME` is set.
 
 ```
-_tvm_runtime_ops = load_library.load_op_library(resource_loader.get_path_to_datafile('tvm_runtime.so'))
-tvm_runtime = _tvm_runtime_ops.tvm_runtime
+cd ../../tvm_runtime_op/
 
-with tf.Session() as sess:
-  output = tvm_runtime(tf.constant([10, 20, 11, -30]))
-  print(sess.run(output))
+./build.sh
 ```
+
+This will generate the file `tvm_runtime_op.so`.
+
+3. Test with TensorFlow Python script.
+
+```
+cd ../examples/addone/
+
+cp ../../tvm_runtime_op/tvm_runtime_op.so ./
+cp ../../tvm_runtime_op/tvm_runtime.py ./
+
+export LD_LIBRARY_PATH=${TVM_HOME}/build/:${LD_LIBRARY_PATH}
+./test_addone.py
+```
+
+## Contribution
+
+The implementation of TensorFlow custom op and Python wrapper are in [tvm_runtime_op](./tvm_runtime_op/).
+
+Currently it needs to modify source code to support int or double dtype and GPU inference.
