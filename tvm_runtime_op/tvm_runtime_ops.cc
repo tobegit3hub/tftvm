@@ -7,8 +7,8 @@ using namespace tensorflow;
 REGISTER_OP("TvmRuntime")
     .Attr("so_path: string")
     .Attr("function_name: string")
-    .Input("tvm_input: int32")
-    .Output("tvm_output: int32");
+    .Input("tvm_input: float")
+    .Output("tvm_output: float");
     //.SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
     //  c->set_output(0, c->input(0));
     //  return Status::OK();

@@ -20,8 +20,8 @@ import os
 
 def prepare_test_libs(base_path):
     n = tvm.var("n")
-    #A = tvm.placeholder((n,), name='A')
-    A = tvm.placeholder((n,), name='A', dtype="int32")
+    A = tvm.placeholder((n,), name='A')
+    #A = tvm.placeholder((n,), name='A', dtype="int32")
     B = tvm.compute(A.shape, lambda *i: A(*i) + 1, name='B')
     s = tvm.create_schedule(B.op)
     # Compile library as dynamic library

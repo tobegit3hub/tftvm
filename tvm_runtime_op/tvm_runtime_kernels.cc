@@ -32,12 +32,12 @@ private:
   void Compute(OpKernelContext* context) override {
     // Grab the input tensor
     const Tensor& input_tensor = context->input(0);
-    auto input = input_tensor.flat<int32>();
+    auto input = input_tensor.flat<float>();
 
     DLTensor* x;
     DLTensor* y;
     int ndim = 1;
-    int dtype_code = kDLInt;
+    int dtype_code = kDLFloat;
     int dtype_bits = 32;
     int dtype_lanes = 1;
     int device_type = kDLCPU;
@@ -49,7 +49,7 @@ private:
                   device_type, device_id, &y);
 
     // Copy input tensor data to DLPack
-    x->data = const_cast<int32*>(input.data());
+    x->data = const_cast<float*>(input.data());
     const int input_size = input.size();
 
     tvm_func(x, y);
@@ -58,7 +58,7 @@ private:
     Tensor* output_tensor = NULL;
     OP_REQUIRES_OK(context, context->allocate_output(0, input_tensor.shape(),
                                                      &output_tensor));
-    auto output_flat = output_tensor->flat<int32>();
+    auto output_flat = output_tensor->flat<float>();
  
     // TODO: Use zero-copy instead of memory copy
     memcpy(output_flat.data(), y->data, input_size*4); 
