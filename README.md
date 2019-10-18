@@ -4,46 +4,31 @@
 
 Integrate TensorFlow custom op with TVM Runtime.
 
-TVM provides the C++ API to deploy optimized op in any devices. We can wrap TVM Runtime as TensorFlow custom op which can be loaded by TensorFlow graph and session.
+TVM provides efficient C++ API to deploy optimized op in any devices. This project provides the TensorFlow custom op for TVM Runtime which can be loaded by TensorFlow session.
 
-##  Usage
+## Usage
 
-1. Implement the TVM op in Python and export the dynamic library.
-
-```
-cd ./examples/addone/
-
-./prepare_addone_lib.py
-```
-
-This will generate the file `tvm_addone_dll.so`.
-
-2. Load TVM op with TensorFlow custom op.
-
-Download the `tvm_runtime_op.so` and `tvm_runtime.py` for your OS. If you want to build from scratch, make sure `tesnorflow` is installed and `TVM_HOME` is set.
+We can load TVM op from dynamic libraries in TensorFlow graph with `tvm_runtime` op.
 
 ```
-cd ../../tvm_runtime_op/
+import tensorflow as tf
+from tvm_runtime import tvm_runtime
 
-./build.sh
+with tf.Session() as sess:
+  a = tf.constant([10.1, 20.0, 11.2, -30.3])
+  b = tvm_runtime(a, so_path="tvm_addone_dll.so", function_name="addone")
+  print(sess.run(b))
 ```
 
-This will generate the file `tvm_runtime_op.so`.
+## Examples
 
-3. Test with TensorFlow Python script.
+TVM provides the [test_libs](https://github.com/dmlc/tvm/tree/master/apps/howto_deploy) to introduce C++ deploy API.
 
-```
-cd ../examples/addone/
+We can use the example library to integrated TVM with TensorFlow graph. More details in [examples/addone](./examples/addone/).
 
-cp ../../tvm_runtime_op/tvm_runtime_op.so ./
-cp ../../tvm_runtime_op/tvm_runtime.py ./
-
-export LD_LIBRARY_PATH=${TVM_HOME}/build/:${LD_LIBRARY_PATH}
-./test_addone.py
-```
 
 ## Contribution
 
 The implementation of TensorFlow custom op and Python wrapper are in [tvm_runtime_op](./tvm_runtime_op/).
 
-Currently it needs to modify source code to support int or double dtype and GPU inference.
+Currently it needs modification of source code to support int or double dtype and GPU inference.
