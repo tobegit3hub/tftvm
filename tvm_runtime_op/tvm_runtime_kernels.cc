@@ -10,24 +10,28 @@ using namespace tensorflow;
 
 class TvmRuntimeOp : public OpKernel {
 
+private:
+  tvm::runtime::PackedFunc tvm_func;
+  string so_path;
+  string function_name;
+
  public:
   explicit TvmRuntimeOp(OpKernelConstruction* context) : OpKernel(context) {
-    // TODO: Need to load dynamic library and specify function
-    tvm::runtime::Module mod_dylib =
-        tvm::runtime::Module::LoadFromFile("lib/test_addone_dll.so");
-    LOG(INFO) << "Verify dynamic loading from test_addone_dll.so";
 
-    const string fname = "addone";
-    //tvm::runtime::PackedFunc f = mod_dylib.GetFunction(fname);
-    f = mod_dylib.GetFunction(fname);
-    CHECK(f != nullptr);
+    // Get attr
+    context->GetAttr("so_path", &so_path);
+    context->GetAttr("function_name", &function_name);
+
+    // Load TVM function from dynamic library
+    tvm::runtime::Module mod_dylib = tvm::runtime::Module::LoadFromFile(so_path);
+    LOG(INFO) << "Verify dynamic loading from " << so_path;
+    tvm_func = mod_dylib.GetFunction(function_name);
+    CHECK(tvm_func != nullptr);
   }
   
   void Compute(OpKernelContext* context) override {
     // Grab the input tensor
     const Tensor& input_tensor = context->input(0);
-
-    // TODO: Need to specify dtype
     auto input = input_tensor.flat<int32>();
 
     DLTensor* x;
@@ -48,7 +52,7 @@ class TvmRuntimeOp : public OpKernel {
     x->data = const_cast<int32*>(input.data());
     const int input_size = input.size();
 
-    f(x, y);
+    tvm_func(x, y);
 
     // Create output tensor from DLPack
     Tensor* output_tensor = NULL;
@@ -56,13 +60,10 @@ class TvmRuntimeOp : public OpKernel {
                                                      &output_tensor));
     auto output_flat = output_tensor->flat<int32>();
  
-    // TODO: Need to compute data length with dtype
+    // TODO: Use zero-copy instead of memory copy
     memcpy(output_flat.data(), y->data, input_size*4); 
    
   }
-
-private:
-  tvm::runtime::PackedFunc f;
 
 };
 

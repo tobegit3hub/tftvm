@@ -5,6 +5,8 @@
 using namespace tensorflow;
 
 REGISTER_OP("TvmRuntime")
+    .Attr("so_path: string")
+    .Attr("function_name: string")
     .Input("tvm_input: int32")
     .Output("tvm_output: int32");
     //.SetShapeFn([](::tensorflow::shape_inference::InferenceContext* c) {
