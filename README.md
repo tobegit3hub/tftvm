@@ -12,7 +12,7 @@ We can load TVM op from dynamic libraries in TensorFlow graph with `tvm_runtime`
 
 ```
 import tensorflow as tf
-from tvm_runtime import tvm_runtime
+from tvm_runtime_ops import tvm_runtime
 
 with tf.Session() as sess:
   a = tf.constant([10.1, 20.0, 11.2, -30.3])
