@@ -18,6 +18,7 @@
 import tvm
 import os
 
+
 def prepare_test_libs(base_path):
     n = tvm.var("n")
     A = tvm.placeholder((n,), name='A')
@@ -29,10 +30,17 @@ def prepare_test_libs(base_path):
     dylib_path = os.path.join(base_path, "test_addone_dll.so")
     fadd_dylib.export_library(dylib_path)
 
+    bx, tx = s[B].split(B.op.axis[0], factor=64)
+    s[B].bind(bx, tvm.thread_axis("blockIdx.x"))
+    s[B].bind(tx, tvm.thread_axis("threadIdx.x"))
+    fadd_dylib = tvm.build(s, [A, B], "cuda", name="addone")
+    dylib_path = os.path.join(base_path, "test_addone_cuda_dll.so")
+    fadd_dylib.export_library(dylib_path)
     # Compile library in system library mode
     #fadd_syslib = tvm.build(s, [A, B], "llvm --system-lib", name="addonesys")
     #syslib_path = os.path.join(base_path, "test_addone_sys.o")
     #fadd_syslib.save(syslib_path)
+
 
 if __name__ == "__main__":
     curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
