@@ -2,33 +2,54 @@
 
 ## Introduction
 
-Integrate TensorFlow custom op with TVM Runtime.
+This project enables TensorFlow users to run TVM-optimized operators. 
 
-TVM provides efficient C++ API to deploy optimized op in any devices. This project provides the TensorFlow custom op for TVM Runtime which can be loaded by TensorFlow session.
+TVM is one of the most popular compile stack for graph and operator optmization. We can embed TVM in TensorFlow graph to leverage the usability of TensorFlow and extensibility of TVM. The [RFC](https://discuss.tvm.ai/t/rfc-add-tensorflow-custom-op-to-embed-tvm-runtime-in-tensorflow-graph-and-session/4601) is under discussion and this project may migrate to [tvm](https://github.com/apache/incubator-tvm) in the future.
+
+## Installation
+
+Make sure the `TensorFlow` and `TVM` has been installed and setup environment variable of `TVM_HOME`. Notice that the following steps can be skipped once these packages has been migrated to `TVM`.
+
+We can build the `TVMDSOOp` from scratch or download for your OS arch.
+
+```
+git clone https://github.com/tobegit3hub/tftvm
+cd ./tftvm/cpp/
+./build.sh
+```
+
+Then links the files to existing `TVM` path and set `LD_LIBRARY_PATH`.
+
+```
+ln -s $(pwd)/tftvm/python/tf_op/ ${TVM_HOME}/python/tvm/contrib/
+ln -s $(pwd)/tftvm/cpp/tvm_dso_op.so ${TVM_HOME}/build/
+
+export LD_LIBRARY_PATH=${TVM_HOME}/build/:${LD_LIBRARY_PATH}
+```
 
 ## Usage
 
-We can load TVM op from dynamic libraries in TensorFlow graph with `tvm_runtime` op.
+Users can use Python API to load TVM dynamic libraries in TensorFlow graph and session.
 
 ```
 import tensorflow as tf
-from tvm_runtime_ops import tvm_runtime
+from tvm.contrib import tf_op
+
+mod = tf_op.Module("tvm_addone_dll.so")
+addone = mod["addone"]
 
 with tf.Session() as sess:
   a = tf.constant([10.1, 20.0, 11.2, -30.3])
-  b = tvm_runtime(a, lib_path="tvm_addone_dll.so", function_name="addone")
+  b = addone(a)
   print(sess.run(b))
 ```
 
 ## Examples
 
-TVM provides the [test_libs](https://github.com/dmlc/tvm/tree/master/apps/howto_deploy) to introduce C++ deploy API.
+[addone](./examples/addone/) is the walk-through example to export TVM libraries and load with TensorFlow.
 
-We can use the example library to integrated TVM with TensorFlow graph. More details in [examples/addone](./examples/addone/).
-
+[graph_editor](./graph_editor/addone_example.py) provides the example to edit TensorFlow graph with TVM operator.
 
 ## Contribution
 
-The implementation of TensorFlow custom op and Python wrapper are in [tvm_runtime_op](./tvm_runtime_op/).
-
-Currently it needs modification of source code to support int or double dtype and GPU inference.
+Feel free to discuss in [TVM RFC](https://discuss.tvm.ai/t/rfc-add-tensorflow-custom-op-to-embed-tvm-runtime-in-tensorflow-graph-and-session/4601) and any feedback is welcome.
