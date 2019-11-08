@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project enables TensorFlow users to run TVM-optimized operators. 
+This project enables TensorFlow users to run TVM-optimized operators without effort. 
 
 TVM is one of the most popular compile stack for graph and operator optmization. We can embed TVM in TensorFlow graph to leverage the usability of TensorFlow and extensibility of TVM. The [RFC](https://discuss.tvm.ai/t/rfc-add-tensorflow-custom-op-to-embed-tvm-runtime-in-tensorflow-graph-and-session/4601) is under discussion and this project may migrate to [tvm](https://github.com/apache/incubator-tvm) in the future.
 
@@ -29,7 +29,7 @@ export LD_LIBRARY_PATH=${TVM_HOME}/build/:${LD_LIBRARY_PATH}
 
 ## Usage
 
-Users can use Python API to load TVM dynamic libraries in TensorFlow graph and session.
+We can use Python API to load TVM dynamic libraries in TensorFlow graph and session.
 
 ```
 import tensorflow as tf
