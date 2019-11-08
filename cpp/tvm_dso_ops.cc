@@ -22,7 +22,10 @@
 using namespace tensorflow;
 
 REGISTER_OP("TvmDsoOp")
+    .Input("input: float")
+    .Output("output: float")
     .Attr("lib_path: string")
     .Attr("func_name: string")
-    .Input("input: float")
-    .Output("output: float");
+    .Attr("output_dtype: string")
+    .Attr("output_shape: string")
+    .Attr("device: string");
