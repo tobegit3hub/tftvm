@@ -60,13 +60,23 @@ private:
   tvm::runtime::PackedFunc tvm_func;
   string lib_path;
   string func_name;
+  string output_dtype;
+  string output_shape;
+  string device;
+
+  void initAttributes(OpKernelConstruction* context) {
+    context->GetAttr("lib_path", &lib_path);
+    context->GetAttr("func_name", &func_name);
+    context->GetAttr("output_dtype", &output_dtype);
+    context->GetAttr("output_shpae", &output_shape);
+    context->GetAttr("device", &device);
+  }
 
  public:
   explicit TVMDSOOp(OpKernelConstruction* context) : OpKernel(context) {
 
     // Get attr
-    context->GetAttr("lib_path", &lib_path);
-    context->GetAttr("func_name", &func_name);
+    initAttributes(context);
 
     // Load TVM function from dynamic library
     tvm::runtime::Module mod_dylib = tvm::runtime::Module::LoadFromFile(lib_path);
