@@ -41,7 +41,7 @@ class Func():
     self.tvm_dso_op  = tvm_dso_op.tvm_dso_op
     
   def apply(self, *params):
-    return self.tvm_dso_op(params, lib_path=self.lib_path, func_name=self.func_name, output_dtype=self.output_dtype, output_shape=self.output_shape, device=self.device)
+    return self.tvm_dso_op(*params, lib_path=self.lib_path, func_name=self.func_name, output_dtype=self.output_dtype, output_shape=self.output_shape, device=self.device)
 
   def __call__(self, *params):
-    return self.apply(params)
+    return self.apply(*params)
