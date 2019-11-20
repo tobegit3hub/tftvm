@@ -73,7 +73,7 @@ class TensorAsBuf {
 };
 
 
-int get_dlpack_datatype(const Tensor& tf_tensor, DLDataType* res) {
+int GetDLPackDtype(const Tensor& tf_tensor, DLDataType* res) {
     auto dtype = tf_tensor.dtype();
     if (dtype == DT_FLOAT) {
       res->code = kDLFloat;
@@ -86,7 +86,7 @@ int get_dlpack_datatype(const Tensor& tf_tensor, DLDataType* res) {
 }
 
 
-void ensure_alignment(OpKernelContext* ctx, const Tensor& tensor, TensorAsBuf* out) {
+void EnsureAlignment(OpKernelContext* ctx, const Tensor& tensor, TensorAsBuf* out) {
     char* buf = (char*) tensor.tensor_data().data();
     out->origin_buf = buf;
     out->size = tensor.TotalBytes(); 
@@ -113,11 +113,11 @@ void ensure_alignment(OpKernelContext* ctx, const Tensor& tensor, TensorAsBuf* o
 }
 
 
-int make_dltensor(const TensorAsBuf& src, const DLContext& ctx, int64_t* tf_shape, DLTensor* out) {
+int MakeDLTensor(const TensorAsBuf& src, const DLContext& ctx, int64_t* tf_shape, DLTensor* out) {
     DLDataType dlpack_type;
     const Tensor& tensor = *src.tensor;
 
-    int status = get_dlpack_datatype(tensor, &dlpack_type);
+    int status = GetDLPackDtype(tensor, &dlpack_type);
     if (status != 0) {
         return status;
     }
@@ -208,16 +208,16 @@ private:
 
     DLTensor dl_input;
     TensorAsBuf input;
-    ensure_alignment(context, input_tensor, &input);
+    EnsureAlignment(context, input_tensor, &input);
 
-    int status = make_dltensor(input, dl_ctx, input_shape_ptr, &dl_input);
+    int status = MakeDLTensor(input, dl_ctx, input_shape_ptr, &dl_input);
     OP_REQUIRES(context, status == 0, Status(error::INTERNAL, "Fail to create dlpack tensor for input"));
 
     DLTensor dl_output;
     TensorAsBuf output;
-    ensure_alignment(context, *output_tensor, &output);
+    EnsureAlignment(context, *output_tensor, &output);
 
-    status = make_dltensor(output, dl_ctx, output_shape_ptr, &dl_output);
+    status = MakeDLTensor(output, dl_ctx, output_shape_ptr, &dl_output);
     OP_REQUIRES(context, status == 0, Status(error::INTERNAL, "Fail to create dlpack tensor for output"));
 
     input.CopyFromOrigin();     
