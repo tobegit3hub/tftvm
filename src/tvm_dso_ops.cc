@@ -21,11 +21,62 @@
 
 using namespace tensorflow;
 
-REGISTER_OP("TvmDsoOp")
-    .Input("input: float")
-    .Output("output: float")
-    .Attr("lib_path: string")
-    .Attr("func_name: string")
-    .Attr("output_dtype: string")
-    .Attr("output_shape: string")
-    .Attr("device: string");
+#define REGISTER_TFTVM_OP(n) REGISTER_OP("TvmDsoOp" #n) \
+    .Output("output: float") \
+    .Attr("lib_path: string") \
+    .Attr("func_name: string") \
+    .Attr("output_dtype: string") \
+    .Attr("output_shape: string") \
+    .Attr("device: string")
+
+
+REGISTER_TFTVM_OP(1).Input("input: float");
+
+REGISTER_TFTVM_OP(2)
+    .Input("input1: float")
+    .Input("input2: float");
+
+REGISTER_TFTVM_OP(3)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float");
+
+REGISTER_TFTVM_OP(4)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float")
+    .Input("input4: float");
+
+REGISTER_TFTVM_OP(5)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float")
+    .Input("input4: float")
+    .Input("input5: float");
+
+REGISTER_TFTVM_OP(6)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float")
+    .Input("input4: float")
+    .Input("input5: float")
+    .Input("input6: float");
+
+REGISTER_TFTVM_OP(7)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float")
+    .Input("input4: float")
+    .Input("input5: float")
+    .Input("input6: float")
+    .Input("input7: float");
+
+REGISTER_TFTVM_OP(8)
+    .Input("input1: float")
+    .Input("input2: float")
+    .Input("input3: float")
+    .Input("input4: float")
+    .Input("input5: float")
+    .Input("input6: float")
+    .Input("input7: float")
+    .Input("input8: float");

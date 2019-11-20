@@ -26,11 +26,14 @@
 #include <tvm/runtime/packed_func.h>
 #include "tensorflow/core/framework/op_kernel.h"
 
+#include "index_seq.h"
 
 using namespace tensorflow;
 
 typedef Eigen::ThreadPoolDevice CPUDevice;
 typedef Eigen::GpuDevice GPUDevice;
+typedef gtl::InlinedVector<int64, 4> ShapeContainer;
+
 
 template <typename DEVICE_TYPE>
 class TVMDSOOpTrait;
@@ -157,7 +160,7 @@ class TVMDSOOpTrait<GPUDevice> {
 };
 
 
-template <typename DEVICE_TYPE>
+template <typename DEVICE_TYPE, int NUM_INPUTS>
 class TVMDSOOp : public OpKernel {
 
 private:
@@ -190,39 +193,49 @@ private:
   }
   
   void Compute(OpKernelContext* context) override {
-    // Grab the input tensor
-    auto input_tensor = context->input(0);
-    auto input_shape_buf = input_tensor.shape().dim_sizes();
-    auto input_shape_ptr = (int64_t*) input_shape_buf.data();
+
+    DLTensor args[NUM_INPUTS + 1];
+    TensorAsBuf buf_info[NUM_INPUTS];
+    ShapeContainer shapes[NUM_INPUTS];
+
+    int status;
+    int device_id = TVMDSOOpTrait<DEVICE_TYPE>::device_id(context);
+    int device_type = TVMDSOOpTrait<DEVICE_TYPE>::device_type;
+    
+    DLContext dl_ctx = { DLDeviceType(device_type), device_id };
+    
+    for (int i = 0; i < NUM_INPUTS; ++i) {
+        // Grab the input tensor
+        auto& input_tensor = context->input(i);
+
+        // Create shape container, should keep ref during execution
+        shapes[i] = input_tensor.shape().dim_sizes();
+        auto shape_ptr = (int64_t*) shapes[i].data();
+
+        TensorAsBuf& input = buf_info[i];
+        input.device_type = device_type;
+
+        EnsureAlignment(context, input_tensor, &input);
+        input.CopyFromOrigin();
+
+        status = MakeDLTensor(input, dl_ctx, shape_ptr, &args[i]);
+        OP_REQUIRES(context, status == 0, Status(error::INTERNAL, "Fail to create dlpack tensor for input"));
+    }
 
     // Allocate output tensor
     Tensor* output_tensor;
-    OP_REQUIRES_OK(context, context->allocate_output(0, input_tensor.shape(), &output_tensor));
-    auto output_shape_buf = output_tensor->shape().dim_sizes();    
-    auto output_shape_ptr = (int64_t*) output_shape_buf.data();
+    OP_REQUIRES_OK(context, context->allocate_output(0, context->input(0).shape(), &output_tensor));
+    auto output_shape = output_tensor->shape().dim_sizes();    
+    auto output_shape_ptr = (int64_t*) output_shape.data();
     
-    int device_id = TVMDSOOpTrait<DEVICE_TYPE>::device_id(context);
-    int device_type = TVMDSOOpTrait<DEVICE_TYPE>::device_type;
-
-    DLContext dl_ctx = { DLDeviceType(device_type), device_id };
-
-    DLTensor dl_input;
-    TensorAsBuf input;
-    EnsureAlignment(context, input_tensor, &input);
-
-    int status = MakeDLTensor(input, dl_ctx, input_shape_ptr, &dl_input);
-    OP_REQUIRES(context, status == 0, Status(error::INTERNAL, "Fail to create dlpack tensor for input"));
-
-    DLTensor dl_output;
     TensorAsBuf output;
+    output.device_type = device_type;
     EnsureAlignment(context, *output_tensor, &output);
 
-    status = MakeDLTensor(output, dl_ctx, output_shape_ptr, &dl_output);
+    status = MakeDLTensor(output, dl_ctx, output_shape_ptr, &args[NUM_INPUTS]);
     OP_REQUIRES(context, status == 0, Status(error::INTERNAL, "Fail to create dlpack tensor for output"));
-
-    input.CopyFromOrigin();     
-
-    tvm_func(&dl_input, &dl_output);
+   
+    apply_variadic_by_ptrs(tvm_func, args);
    
     output.CopyToOrigin(); 
   }
@@ -230,6 +243,16 @@ private:
 
 
 
+#define REGISTER_TFTVM_KERNEL(n) \
+    REGISTER_KERNEL_BUILDER(Name("TvmDsoOp" #n).Device(DEVICE_CPU), TVMDSOOp<CPUDevice, n>); \
+    REGISTER_KERNEL_BUILDER(Name("TvmDsoOp" #n).Device(DEVICE_GPU), TVMDSOOp<GPUDevice, n>); \
 
-REGISTER_KERNEL_BUILDER(Name("TvmDsoOp").Device(DEVICE_CPU), TVMDSOOp<CPUDevice>);
-REGISTER_KERNEL_BUILDER(Name("TvmDsoOp").Device(DEVICE_GPU), TVMDSOOp<GPUDevice>);
+REGISTER_TFTVM_KERNEL(1)
+REGISTER_TFTVM_KERNEL(2)
+REGISTER_TFTVM_KERNEL(3)
+REGISTER_TFTVM_KERNEL(4)
+REGISTER_TFTVM_KERNEL(5)
+REGISTER_TFTVM_KERNEL(6)
+REGISTER_TFTVM_KERNEL(7)
+REGISTER_TFTVM_KERNEL(8)
+
