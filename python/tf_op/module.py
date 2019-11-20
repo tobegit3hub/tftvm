@@ -37,10 +37,14 @@ class Func():
     self.device = device
 
     from tensorflow.python.framework import load_library
-    tvm_dso_op = load_library.load_op_library('tvm_dso_op.so')
-    self.tvm_dso_op  = tvm_dso_op.tvm_dso_op
+    # delay initialization to called first time, where num input arguments is known
+    self.tvm_dso_op = None
+    self.module = load_library.load_op_library('tvm_dso_op.so')
     
   def apply(self, *params):
+    if self.tvm_dso_op is None:
+      num_inputs = len(params)
+      self.tvm_dso_op = getattr(self.module, "tvm_dso_op%s" % num_inputs)
     return self.tvm_dso_op(*params, lib_path=self.lib_path, func_name=self.func_name, output_dtype=self.output_dtype, output_shape=self.output_shape, device=self.device)
 
   def __call__(self, *params):
