@@ -95,7 +95,7 @@ void EnsureAlignment(OpKernelContext* ctx, const Tensor& tensor, TensorAsBuf* ou
     out->size = tensor.TotalBytes(); 
 
     int alignment = 64;
-    char* aligned = (char*)(((uint64_t)buf + alignment) & (~ (alignment - 1)));
+    char* aligned = (char*)(((uint64_t)buf + alignment - 1) & (~ (alignment - 1)));
     if (buf == aligned) {
         out->tensor = const_cast<Tensor*>(&tensor);
         out->buf = buf;
@@ -167,16 +167,19 @@ private:
   tvm::runtime::PackedFunc tvm_func;
   string lib_path;
   string func_name;
-  string output_dtype;
-  string output_shape;
-  string device;
+
+  DataType output_dtype;
+  
+  bool has_static_output_shape;
+  std::vector<int64> static_output_shape;
 
   void initAttributes(OpKernelConstruction* context) {
     context->GetAttr("lib_path", &lib_path);
     context->GetAttr("func_name", &func_name);
     context->GetAttr("output_dtype", &output_dtype);
-    context->GetAttr("output_shpae", &output_shape);
-    context->GetAttr("device", &device);
+     
+    context->GetAttr("has_static_output_shape", &has_static_output_shape);
+    context->GetAttr("static_output_shape", &static_output_shape);
   }
 
  public:
@@ -203,6 +206,22 @@ private:
     int device_type = TVMDSOOpTrait<DEVICE_TYPE>::device_type;
     
     DLContext dl_ctx = { DLDeviceType(device_type), device_id };
+
+    // Get output shape
+    TensorShape output_shape;
+    auto& output_shape_tensor = context->input(NUM_INPUTS);
+    if (has_static_output_shape) {
+      // use static output shape
+      const int64* dims = static_output_shape.data();
+      TensorShapeUtils::MakeShape(dims, static_output_shape.size(), &output_shape);
+    } else if (output_shape_tensor.dims() == 1) {
+      // use shape tensor values as output shape
+      const int64* dims = output_shape_tensor.flat<int64>().data();
+      TensorShapeUtils::MakeShape(dims, 1, &output_shape);
+    } else {
+      // use input tensor shape by default
+      output_shape = context->input(0).shape();
+    }
     
     for (int i = 0; i < NUM_INPUTS; ++i) {
         // Grab the input tensor
@@ -224,9 +243,9 @@ private:
 
     // Allocate output tensor
     Tensor* output_tensor;
-    OP_REQUIRES_OK(context, context->allocate_output(0, context->input(0).shape(), &output_tensor));
-    auto output_shape = output_tensor->shape().dim_sizes();    
-    auto output_shape_ptr = (int64_t*) output_shape.data();
+    OP_REQUIRES_OK(context, context->allocate_output(0, output_shape, &output_tensor));
+    auto output_shape_dim_buf = output_tensor->shape().dim_sizes(); // should keep alive on stack 
+    auto output_shape_ptr = (int64_t*) output_shape_dim_buf.data();
     
     TensorAsBuf output;
     output.device_type = device_type;
