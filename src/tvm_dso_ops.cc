@@ -22,61 +22,70 @@
 using namespace tensorflow;
 
 #define REGISTER_TFTVM_OP(n) REGISTER_OP("TvmDsoOp" #n) \
-    .Output("output: float") \
+    .Output("output: output_dtype") \
     .Attr("lib_path: string") \
     .Attr("func_name: string") \
-    .Attr("output_dtype: string") \
-    .Attr("output_shape: string") \
-    .Attr("device: string")
+    .Attr("output_dtype: {int32, int64, float} = DT_FLOAT") \
+    .Attr("static_output_shape: list(int) >= 0 = []") \
+    .Attr("has_static_output_shape: bool") \
 
 
-REGISTER_TFTVM_OP(1).Input("input: float");
+REGISTER_TFTVM_OP(1)
+    .Input("input: T").Attr("T: type") \
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(2)
-    .Input("input1: float")
-    .Input("input2: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(3)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(4)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float")
-    .Input("input4: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("input4: T4").Attr("T4: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(5)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float")
-    .Input("input4: float")
-    .Input("input5: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("input4: T4").Attr("T4: type")
+    .Input("input5: T5").Attr("T5: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(6)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float")
-    .Input("input4: float")
-    .Input("input5: float")
-    .Input("input6: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("input4: T4").Attr("T4: type")
+    .Input("input5: T5").Attr("T5: type")
+    .Input("input6: T6").Attr("T6: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(7)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float")
-    .Input("input4: float")
-    .Input("input5: float")
-    .Input("input6: float")
-    .Input("input7: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("input4: T4").Attr("T4: type")
+    .Input("input5: T5").Attr("T5: type")
+    .Input("input6: T6").Attr("T6: type")
+    .Input("input7: T7").Attr("T7: type")
+    .Input("dynamic_output_shape: int64");
 
 REGISTER_TFTVM_OP(8)
-    .Input("input1: float")
-    .Input("input2: float")
-    .Input("input3: float")
-    .Input("input4: float")
-    .Input("input5: float")
-    .Input("input6: float")
-    .Input("input7: float")
-    .Input("input8: float");
+    .Input("input1: T1").Attr("T1: type")
+    .Input("input2: T2").Attr("T2: type")
+    .Input("input3: T3").Attr("T3: type")
+    .Input("input4: T4").Attr("T4: type")
+    .Input("input5: T5").Attr("T5: type")
+    .Input("input6: T6").Attr("T6: type")
+    .Input("input7: T7").Attr("T7: type")
+    .Input("input8: T8").Attr("T8: type")
+    .Input("dynamic_output_shape: int64");
