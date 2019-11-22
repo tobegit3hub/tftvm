@@ -82,6 +82,14 @@ int GetDLPackDtype(const Tensor& tf_tensor, DLDataType* res) {
       res->code = kDLFloat;
       res->bits = 32;
       res->lanes = 1;
+    } else if (dtype == DT_INT64) {
+      res->code = kDLInt;
+      res->bits = 64;
+      res->lanes = 1;
+    } else if (dtype == DT_INT32) {
+      res->code = kDLInt;
+      res->bits = 32;
+      res->lanes = 1;
     } else {
       return -1;
     }
