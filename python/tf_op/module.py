@@ -82,6 +82,8 @@ class Func():
 
   def _pack_shape_tensor(self, shape):
     if isinstance(shape, tf.Tensor):
+      if shape.dtype == tf.int32:
+        shape = tf.cast(shape, tf.int64)
       return shape
     elif isinstance(shape, list):
       shape_dims = []

@@ -23,20 +23,38 @@ import sys
 from tvm.contrib import tf_op
 # import tf_op
 
+
 def main():
-  mod = tf_op.Module("tvm_addone_dll.so")
-  addone = mod.func("addone", output_shape=[2])
+  module = tf_op.Module("tvm_add_dll.so")
+  
+  left = tf.placeholder("float32", shape=[4])
+  right = tf.placeholder("float32", shape=[4])
+  
+  feed_dict = {
+    left: [1.0, 2.0, 3.0, 4.0],
+    right: [5.0, 6.0, 7.0, 8.0]
+  }  
+
+  # specify output shape with various styles, output type default to float
+  # (1) via static dimensions 
+  add1 = module.func("vector_add", output_shape=[4], output_dtype="float")
+  # (2) via shape tensor
+  add2 = module.func("vector_add", output_shape=tf.shape(left), output_dtype="float")
+  # (3) via dimension tensor list
+  add3 = module.func("vector_add", output_shape=[tf.shape(left)[0]], output_dtype="float")
 
   with tf.Session() as sess:
+    
     with tf.device("/cpu:0"):
-      placeholder = tf.placeholder("float32", shape=[2])
-      print(sess.run(addone(placeholder), feed_dict={placeholder: [1.0, 2.0]}))
+      print(sess.run(add1(left, right), feed_dict))
+      print(sess.run(add2(left, right), feed_dict))
+      print(sess.run(add3(left, right), feed_dict))
 
     with tf.device("/gpu:0"):
-      placeholder = tf.placeholder("float32")
-      addone_gpu = tf_op.Module("tvm_addone_cuda_dll.so")["addone"]
-      print(sess.run(addone_gpu(placeholder), feed_dict={placeholder: [1.0, 2.0]}))
-      #print(sess.run(addone_gpu(tf.constant([1.0, 2.0], dtype=tf.float32))))
+      add_gpu = tf_op.Module("tvm_add_cuda_dll.so").func("vector_add")
+      print(sess.run(add_gpu(left, right), feed_dict))
+
 
 if __name__ == "__main__":
   main()
+
