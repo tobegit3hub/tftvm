@@ -17,29 +17,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import tensorflow as tf
-import sys
-sys.path.append("./python/")
-#from tvm.contrib import tf_op
-import tf_op
+import tvm
+import os
 
 def main():
-  mod = tf_op.Module("tvm_add_dll.so")
-  add = mod["add"]
-
-  with tf.Session() as sess:
-    
-    with tf.device("/cpu:0"):
-      left = tf.placeholder("float32", shape=[2])
-      right = tf.placeholder("float32", shape=[2])
-      print(sess.run(add(left, right), feed_dict={left: [1.0, 2.0], right: [3.0, 4.0]}))
-
-    with tf.device("/gpu:0"):
-      left = tf.placeholder("float32", shape=[2])
-      right = tf.placeholder("float32", shape=[2])
-      add_gpu = tf_op.Module("tvm_add_cuda_dll.so")["add"]
-      print(sess.run(add_gpu(left, right), feed_dict={left: [1.0, 2.0], right: [3.0, 4.0]}))
-
+  n = tvm.var("n")
+  A = tvm.placeholder((n,), name='A')
+  B = tvm.placeholder((n,), name='B')
+  C = tvm.compute(A.shape, lambda i: A[i] + B[i], name='C')
+  s = tvm.create_schedule(C.op)
+  fadd_dylib = tvm.build(s, [A, B, C], "llvm", name="vector_add")
+  fadd_dylib.export_library("tvm_add_dll.so")
+  
+  bx, tx = s[C].split(C.op.axis[0], factor=64)
+  s[C].bind(bx, tvm.thread_axis("blockIdx.x"))
+  s[C].bind(tx, tvm.thread_axis("threadIdx.x"))
+  fadd_dylib = tvm.build(s, [A, B, C], "cuda", name="vector_add")
+  fadd_dylib.export_library("tvm_add_cuda_dll.so")
+  
 
 if __name__ == "__main__":
   main()

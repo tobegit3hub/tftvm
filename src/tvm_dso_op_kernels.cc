@@ -57,9 +57,9 @@ class TensorAsBuf {
             return;
         }
         if (device_type == kDLCPU) {
-            memcpy(origin_buf, buf, size); 
+            memcpy(origin_buf, buf + offset, size); 
         } else {
-            cudaMemcpy(origin_buf, buf, size, cudaMemcpyDeviceToDevice);
+            cudaMemcpy(origin_buf, buf + offset, size, cudaMemcpyDeviceToDevice);
         }
     }
 
@@ -68,9 +68,9 @@ class TensorAsBuf {
             return;
         }
         if (device_type == kDLCPU) {
-            memcpy(buf, origin_buf, size); 
+            memcpy(buf + offset, origin_buf, size); 
         } else {
-            cudaMemcpy(buf, origin_buf, size, cudaMemcpyDeviceToDevice);
+            cudaMemcpy(buf + offset, origin_buf, size, cudaMemcpyDeviceToDevice);
         }
     }
 };
@@ -138,7 +138,7 @@ int MakeDLTensor(const TensorAsBuf& src, const DLContext& ctx, int64_t* tf_shape
     out->strides = NULL;
     out->byte_offset = 0;
     out->dtype = dlpack_type;    
-    out->data = src.buf;
+    out->data = src.buf + src.offset;
     return 0;
 }
 
