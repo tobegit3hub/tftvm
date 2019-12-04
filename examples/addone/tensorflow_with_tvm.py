@@ -18,10 +18,7 @@
 # under the License.
 
 import tensorflow as tf
-import sys
-
 from tvm.contrib import tf_op
-# import tf_op
 
 def main():
   mod = tf_op.Module("tvm_addone_dll.so")
@@ -36,7 +33,6 @@ def main():
       placeholder = tf.placeholder("float32")
       addone_gpu = tf_op.Module("tvm_addone_cuda_dll.so")["addone"]
       print(sess.run(addone_gpu(placeholder), feed_dict={placeholder: [1.0, 2.0]}))
-      #print(sess.run(addone_gpu(tf.constant([1.0, 2.0], dtype=tf.float32))))
 
 if __name__ == "__main__":
   main()
