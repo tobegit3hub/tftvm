@@ -1,6 +1,6 @@
 # TF-TVM
 
-Notice: This project has been merged into [tvm](https://github.com/apache/incubator-tvm) and please compile with `USE_TF_TVMDSOOP=ON`.
+Deprecated notice: This project has been merged into [tvm](https://github.com/apache/incubator-tvm) and please compile with `USE_TF_TVMDSOOP=ON`.
 
 ## Introduction
 
