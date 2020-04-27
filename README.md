@@ -1,5 +1,7 @@
 # TF-TVM
 
+Notice: This project has been merged into [tvm](https://github.com/apache/incubator-tvm) and please compile with `USE_TF_TVMDSOOP=ON`.
+
 ## Introduction
 
 This project enables TensorFlow users to run TVM-optimized operators without effort. 
